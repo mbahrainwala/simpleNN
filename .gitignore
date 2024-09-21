@@ -27,3 +27,4 @@ replay_pid*
 /simpleNN.iml
 /data/mnist_train.csv
 /data/mnist_test.csv
+/target/
