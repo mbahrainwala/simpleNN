@@ -25,7 +25,7 @@ public class SimpleNN {
         Layer nn = new ConnectedLayer(2, 2);
 
         System.out.println("Before training");
-        for (double[] doubles : test) System.out.println(MatrixUtils.getMaxIndex(nn.getOutput(doubles)));
+        for (double[] doubles : test) System.out.println(doubles[0]+", "+doubles[1]+"-->"+MatrixUtils.getMaxIndex(nn.getOutput(doubles)));
 
         for(int epoch=0; epoch<1000; epoch++) {
             for (int i = 0; i < train.length; i++) {
@@ -37,11 +37,11 @@ public class SimpleNN {
 
         System.out.println("After training");
 
-        for (double[] doubles : test) System.out.println(MatrixUtils.getMaxIndex(nn.getOutput(doubles)));
+        for (double[] doubles : test) System.out.println(doubles[0]+", "+doubles[1]+"-->"+MatrixUtils.getMaxIndex(nn.getOutput(doubles)));
     }
 
     private static void testAdultORChild() {
-        System.out.println("\n\nTesting Adult OR Child");
+        System.out.println("\n\nTesting Adult[1] OR Child[0] Height/Weight");
 
         double[][] train = {
                 {.170,.70}, //a
@@ -64,7 +64,7 @@ public class SimpleNN {
         Layer nn = new ConnectedLayer(2, 2);
 
         System.out.println("Before training");
-        for (double[] doubles : test) System.out.println(MatrixUtils.getMaxIndex(nn.getOutput(doubles)));
+        for (double[] doubles : test) System.out.println(doubles[0]+", "+doubles[1]+"-->"+MatrixUtils.getMaxIndex(nn.getOutput(doubles)));
 
         for(int epoch=0; epoch<100000; epoch++) {
             for (int i = 0; i < train.length; i++) {
@@ -76,11 +76,11 @@ public class SimpleNN {
 
         System.out.println("After training");
 
-        for (double[] doubles : test) System.out.println(MatrixUtils.getMaxIndex(nn.getOutput(doubles)));
+        for (double[] doubles : test) System.out.println(doubles[0]+", "+doubles[1]+"-->"+MatrixUtils.getMaxIndex(nn.getOutput(doubles)));
     }
 
     private static void testAdultORChildGender() {
-        System.out.println("\n\nTesting Adult OR Child with Gender");
+        System.out.println("\n\nTesting Adult[1] OR Child[0] with Gender - Height/Weight/Sex M[0.9] F[0.0]");
 
         double[][] train = {
                 {.170,.70, .9}, //a
@@ -112,15 +112,13 @@ public class SimpleNN {
                 {.148, .62, 0}
         };
 
-//        Layer nn = new ConnectedLayer(3, 2);
-
         NetworkBuilder nb = new NetworkBuilder(3, 1);
         nb.addConnectedLayer(4);
         nb.addConnectedLayer(2);
         NeuralNetwork nn = nb.build();
 
         System.out.println("Before training");
-        for (double[] doubles : test) System.out.println(nn.getOutput(doubles));
+        for (double[] doubles : test) System.out.println(doubles[0]+", "+doubles[1]+", "+doubles[2]+"-->"+nn.getOutput(doubles));
 
         for(int epoch=0; epoch<100000; epoch++) {
             for (int i = 0; i < train.length; i++) {
@@ -130,11 +128,11 @@ public class SimpleNN {
 
         System.out.println("After training");
 
-        for (double[] doubles : test) System.out.println(nn.getOutput(doubles));
+        for (double[] doubles : test) System.out.println(doubles[0]+", "+doubles[1]+", "+doubles[2]+"-->"+nn.getOutput(doubles));
     }
 
     private static void testXOR() {
-        System.out.println("Testing XOR");
+        System.out.println("\n\nTesting XOR");
 
         double zero = 0;
         double one = 1;
@@ -150,7 +148,7 @@ public class SimpleNN {
         NeuralNetwork nn = nb.build();
 
         System.out.println("Before training");
-        for (double[] doubles : test) System.out.println(nn.getOutput(doubles));
+        for (double[] doubles : test) System.out.println(doubles[0]+", "+doubles[1]+"-->"+nn.getOutput(doubles));
 
         for(int epoch=0; epoch<100000; epoch++) {
             for (int i = 0; i < train.length; i++) {
@@ -160,6 +158,6 @@ public class SimpleNN {
 
         System.out.println("After training");
 
-        for (double[] doubles : test) System.out.println(nn.getOutput(doubles));
+        for (double[] doubles : test) System.out.println(doubles[0]+", "+doubles[1]+"-->"+nn.getOutput(doubles));
     }
 }
