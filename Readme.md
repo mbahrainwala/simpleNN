@@ -1,4 +1,4 @@
-<h1 align="center">Simple NN</h1>
+<h1>Simple NN</h1>
 <br/>
 Simple NN is a training example on how to write a neural network from scratch.
 
@@ -19,5 +19,7 @@ https://www.youtube.com/watch?v=aircAruvnKk <br/> This video is a great introduc
 
 I highly recommend the book "Make your own neural network" by Tariq Rashid. It's a great book for beginners and it's very easy to understand.
 
-The power point presentation is available in the repository.<br/>
+The PowerPoint presentation is available in the repository.<br/>
 Introduction To Neural Networks and AI.pptx
+
+To run this extract the mnist_test.7z and mnist_train.7z in the same data folder.
