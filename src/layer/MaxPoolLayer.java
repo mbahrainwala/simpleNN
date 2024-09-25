@@ -9,14 +9,20 @@ public class MaxPoolLayer extends Layer{
     private final int _inRows;
     private final int _inCols;
 
-    double[] output;
+    private double[] output;
+
+    private final int[][] maxRows;
+    private final int[][] maxCols;
 
     public MaxPoolLayer(int _stepSize, int _windowSize, int _inRows, int _inCols) {
         this._stepSize = _stepSize;
         this._windowSize = _windowSize;
         this._inRows = _inRows;
         this._inCols = _inCols;
+        maxRows = new int[getOutputRows()][getOutputCols()];
+        maxCols = new int[getOutputRows()][getOutputCols()];
     }
+
     @Override
     public double[] getOutput(double[] input) {
         double[][] matrixList = MatrixUtils.vectorToMatrix(input, _inRows, _inCols);
@@ -30,7 +36,18 @@ public class MaxPoolLayer extends Layer{
 
     @Override
     public void backPropagate(double[] error) {
+        double[][] errorToPropagate = new double[_inCols][_inRows];
+        double[][] errorMatrix = MatrixUtils.vectorToMatrix(error, getOutputRows(), getOutputCols());
 
+        for(int r=0; r<getOutputRows(); r++) {
+            for (int c = 0; c < getOutputCols(); c++) {
+                int max_x = maxRows[r][c];
+                int max_y = maxCols[r][c];
+                errorToPropagate[max_x][max_y] += errorMatrix[r][c];
+            }
+        }
+
+        getPrevLayer().backPropagate(MatrixUtils.matrixToVector(errorToPropagate));
     }
 
     @Override
@@ -44,28 +61,19 @@ public class MaxPoolLayer extends Layer{
         for(int r = 0; r < getOutputRows(); r+= _stepSize) {
             for (int c = 0; c < getOutputCols(); c += _stepSize) {
                 double max = 0.0;
-                int maxx = 0;
-                int maxy = 0;
 
                 for(int x = 0; x < _windowSize; x++) {
                     for (int y = 0; y < _windowSize; y++) {
                         if(max < input[r+x][c+y]){
                             max=input[r+x][c+y];
-                            maxx = r+x;
-                            maxy = c+y;
+                            maxRows[r][c] = r+x;
+                            maxCols[r][c] = c+y;
                         }
                     }
                 }
-
-                if(maxx > getOutputRows()-_stepSize)
-                    maxx = getOutputRows()-_stepSize;
-                if(maxy > getOutputCols()-_stepSize)
-                    maxy = getOutputCols()-_stepSize;
-
-                output[maxx][maxy] = max;
+                output[r][c] = max;
             }
         }
-
         return output;
     }
 
