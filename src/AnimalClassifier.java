@@ -67,10 +67,10 @@ public class AnimalClassifier {
 
 
         while(true){
-            System.out.print("\n\nPlease enter the image:");
+            System.out.print("\n\nPlease enter the image name in relation to data\\pets.\ne.g. cat\\catT1 or dog\\dogT1\n'exit' to leave: ");
             Scanner scan= new Scanner(System.in);
             String imageName= scan.nextLine();
-            if("exit".equals(imageName))
+            if("exit".equalsIgnoreCase(imageName))
                 break;
 
             try {

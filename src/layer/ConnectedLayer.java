@@ -86,8 +86,8 @@ public class ConnectedLayer extends Layer{
     }
 
     @Override
-    public int getOutputRows() { return 0;}
+    public int getOutputRows() { return (int)Math.sqrt(numberOuts);}
 
     @Override
-    public int getOutputCols() { return 0;}
+    public int getOutputCols() { return numberOuts/getOutputRows();}
 }
