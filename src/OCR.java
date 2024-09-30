@@ -28,8 +28,8 @@ public class OCR {
         System.out.println("\n\n***MaxPoolLayer***\n\n"+player+"\n\n");
 
         NetworkBuilder nb = new NetworkBuilder(28, 28, 25600);
+        nb.addConvolutionLayer(5,2);
         nb.addPoolLayer(2, 1);
-        nb.addConnectedLayer(392);
         nb.addConnectedLayer(10);
         NeuralNetwork nn = nb.build();
 
@@ -42,7 +42,7 @@ public class OCR {
         }
         System.out.println("\n\n***Accuracy*** -> "+(countCorrect*100.0/imagesTest.size())+"%");
 
-        for(int epoc=0; epoc<10; epoc++){
+        for(int epoc=0; epoc<100; epoc++){
             Collections.shuffle(imagesTrain);
             for(Image image: imagesTrain){
                 nn.train(MatrixUtils.matrixToVector(image.data()), image.label());

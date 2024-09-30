@@ -11,24 +11,21 @@ import java.util.List;
 import java.util.Scanner;
 
 public class AnimalClassifier {
+
     public static void main(String[] args) throws IOException {
         System.out.println("***Animal Classifier***");
 
 
         ImageConverter ic = new ImageConverter(128);
-//        Image imageTest = ic.getImage("data/pets/cat/cat (1).jpeg", 0);
-//        System.out.println(imageTest);
 
         NetworkBuilder nb = new NetworkBuilder(128, 128, 25600);
         nb.addConvolutionLayer(8, 5);
         nb.addPoolLayer(2, 1);
-        nb.addConnectedLayer(1638); //
-        nb.addConnectedLayer(163);
-        nb.addConnectedLayer(16);
+        nb.addConnectedLayer(160);
         nb.addConnectedLayer(2);
         NeuralNetwork nn = nb.build();
 
-        int numImages = 20;
+        int numImages = 21;
 
         List<Image> imagesTrain = new ArrayList<>(40);
 
@@ -44,24 +41,47 @@ public class AnimalClassifier {
 
         System.out.println("***Images Loaded***");
         System.out.println("***Commencing Training***");
-        int epochs = 100;
+        int epochs = 10000;
+
+        double rate=0.0d;
         for (int i = 0; i < epochs; i++) {
             Collections.shuffle(imagesTrain);
             for(Image trainingImg: imagesTrain) {
                 nn.train(MatrixUtils.matrixToVector(trainingImg.data()), trainingImg.label());
             }
+
+            int correctCtr=0;
+            for(Image trainingImg: imagesTrain) {
+                int out = nn.getOutput(MatrixUtils.matrixToVector(trainingImg.data()));
+                if (out == trainingImg.label())
+                    correctCtr++;
+
+                rate = (double) correctCtr / imagesTrain.size();
+            }
+
+            System.out.println("Rate after epoc "+i+" = "+rate);
+            if(rate >= .95)
+                break;
         }
         System.out.println("***Training Complete***");
+
 
         while(true){
             System.out.print("\n\nPlease enter the image:");
             Scanner scan= new Scanner(System.in);
             String imageName= scan.nextLine();
-            Image image = ic.getImage("data/pets/"+imageName, 0);
-            if(nn.getOutput(MatrixUtils.matrixToVector(image.data()))==0)
-                System.out.println("Its a cat");
-            else
-                System.out.println("Its a dog");
+            if("exit".equals(imageName))
+                break;
+
+            try {
+                Image image = ic.getImage("data/pets/" + imageName + ".jpeg", 0);
+                if (nn.getOutput(MatrixUtils.matrixToVector(image.data())) == 0)
+                    System.out.println("Its a cat");
+                else
+                    System.out.println("Its a dog");
+            }catch(Exception e){
+                System.out.println("unable to load file. Please reenter...");
+            }
         }
     }
 }
