@@ -37,6 +37,18 @@ public class MatrixUtils {
         return output;
     }
 
+    public static double[][] multiplyScalar(double[][] a, double scalar){
+        double[][] out = new double[a.length][a[0].length];
+
+        for(int r=0; r<a.length; r++){
+            for(int c=0; c<a[0].length; c++){
+                out[r][c]=a[r][c] * scalar;
+            }
+        }
+
+        return out;
+    }
+
     public static double[] addArrays(double[] arr1, double[] arr2){
         double[] output = new double[arr1.length];
 
@@ -82,5 +94,17 @@ public class MatrixUtils {
 
 
         return vector;
+    }
+
+    public static double[][] add(double[][] a, double[][] b){
+        double[][] out = new double[a.length][a[0].length];
+
+        for(int r=0; r<a.length; r++){
+            for(int c=0; c<a[0].length; c++){
+                out[r][c]=a[r][c]+b[r][c];
+            }
+        }
+
+        return out;
     }
 }

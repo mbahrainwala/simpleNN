@@ -19,7 +19,7 @@ public class AnimalClassifier {
         ImageConverter ic = new ImageConverter(128);
 
         NetworkBuilder nb = new NetworkBuilder(128, 128, 25600);
-        nb.addConvolutionLayer(8, 5);
+        nb.addConvolutionLayer(16, 8);
         nb.addPoolLayer(2, 1);
         nb.addConnectedLayer(160);
         nb.addConnectedLayer(2);
@@ -60,8 +60,8 @@ public class AnimalClassifier {
             }
 
             System.out.println("Rate after epoc "+i+" = "+rate);
-            if(rate >= .95)
-                break;
+            if(rate >= .975)
+                break;//do not train the model to have no flexibility.
         }
         System.out.println("***Training Complete***");
 
@@ -79,6 +79,14 @@ public class AnimalClassifier {
                     System.out.println("Its a cat");
                 else
                     System.out.println("Its a dog");
+                System.out.println("Is this correct y/n");
+                scan= new Scanner(System.in);
+                if("n".equalsIgnoreCase(scan.nextLine())) {
+                    int corAns = nn.getOutput(MatrixUtils.matrixToVector(image.data())) == 0 ? 1 : 0;
+                    while(nn.getOutput(MatrixUtils.matrixToVector(image.data()))!=corAns){
+                        nn.train(MatrixUtils.matrixToVector(image.data()), corAns);
+                        }
+                }
             }catch(Exception e){
                 System.out.println("unable to load file. Please reenter...");
             }

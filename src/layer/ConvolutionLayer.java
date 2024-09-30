@@ -9,7 +9,7 @@ public class ConvolutionLayer extends Layer{
     private final int filterSize, stepSize;
     private final int seed;
 
-    private final double[][] filter;
+    private double[][] filter;
 
     public ConvolutionLayer(int imageX, int imageY, int filterSize, int stepSize, int seed){
         this.imageX=imageX;
@@ -88,9 +88,20 @@ public class ConvolutionLayer extends Layer{
         return output;
     }
 
+    private final double learningRate=0.01;
+
     @Override
     public void backPropagate(double[] error) {
-        throw new RuntimeException("This must be the 1st layer.");
+        double[][] filtersDelta = new double[filterSize][filterSize];
+
+        double[][] errorMatrix = MatrixUtils.vectorToMatrix(error, getOutputRows(), getOutputCols());
+
+        double[][] spacedError = spaceArray(errorMatrix);
+        double[][] dLdF= convolve(lastInput, spacedError, 1);
+        double[][] delta = MatrixUtils.multiplyScalar(dLdF, learningRate*-1);
+        filtersDelta = MatrixUtils.add(filtersDelta, delta);
+
+        filter = MatrixUtils.add(filtersDelta, filter);
     }
 
     @Override
@@ -106,5 +117,27 @@ public class ConvolutionLayer extends Layer{
     @Override
     public int getOutputCols() {
         return (imageY-filterSize)/stepSize+1;
+    }
+
+    /**
+     * This will create a spaced out matrix based on our input.
+     */
+    private double[][] spaceArray(double[][] input){
+        if(stepSize < 2){
+            return input;
+        }
+
+        int outRows = (input.length - 1)* stepSize + 1;
+        int outCols = (input[0].length -1)*stepSize+1;
+
+        double[][] output = new double[outRows][outCols];
+
+        for(int i = 0; i < input.length; i++){
+            for(int j = 0; j < input[0].length; j++){
+                output[i*stepSize][j*stepSize] = input[i][j];
+            }
+        }
+
+        return output;
     }
 }
