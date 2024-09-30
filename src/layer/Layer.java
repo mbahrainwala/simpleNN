@@ -25,4 +25,8 @@ public abstract class Layer {
     public abstract void backPropagate(double[] error);
 
     public abstract int getNumberOutput();
+
+    public abstract int getOutputRows();
+
+    public abstract int getOutputCols();
 }

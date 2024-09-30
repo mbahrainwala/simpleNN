@@ -77,8 +77,10 @@ public class MaxPoolLayer extends Layer{
         return output;
     }
 
+    @Override
     public int getOutputRows() {return (_inRows-_windowSize)/_stepSize+1;}
 
+    @Override
     public int getOutputCols() {return (_inCols-_windowSize)/_stepSize+1;}
 
     private static final char FULL_BLOCK= '█';

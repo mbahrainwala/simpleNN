@@ -5,6 +5,7 @@ import network.NetworkBuilder;
 import network.NeuralNetwork;
 import utils.MatrixUtils;
 
+import java.util.Collections;
 import java.util.List;
 
 public class OCR {
@@ -26,8 +27,8 @@ public class OCR {
         player.getOutput(MatrixUtils.matrixToVector(imagesTest.get(testImg).data()));
         System.out.println("\n\n***MaxPoolLayer***\n\n"+player+"\n\n");
 
-        NetworkBuilder nb = new NetworkBuilder(28*28, 25600);
-        nb.addPoolLayer(2, 1, 28, 28);
+        NetworkBuilder nb = new NetworkBuilder(28, 28, 25600);
+        nb.addPoolLayer(2, 1);
         nb.addConnectedLayer(392);
         nb.addConnectedLayer(10);
         NeuralNetwork nn = nb.build();
@@ -42,6 +43,7 @@ public class OCR {
         System.out.println("\n\n***Accuracy*** -> "+(countCorrect*100.0/imagesTest.size())+"%");
 
         for(int epoc=0; epoc<10; epoc++){
+            Collections.shuffle(imagesTrain);
             for(Image image: imagesTrain){
                 nn.train(MatrixUtils.matrixToVector(image.data()), image.label());
             }

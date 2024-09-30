@@ -84,4 +84,10 @@ public class ConnectedLayer extends Layer{
     public int getNumberOutput() {
         return numberOuts;
     }
+
+    @Override
+    public int getOutputRows() { return 0;}
+
+    @Override
+    public int getOutputCols() { return 0;}
 }
