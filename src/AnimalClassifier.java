@@ -17,11 +17,10 @@ public class AnimalClassifier {
         System.out.println("***Animal Classifier***");
 
 
-        ImageConverter ic = new ImageConverter(256, EdgeFilter.VERTICAL_FILTER);
+        ImageConverter ic = new ImageConverter(160, EdgeFilter.VERTICAL_FILTER);
 
-        NetworkBuilder nb = new NetworkBuilder(256, 256, 256000);
+        NetworkBuilder nb = new NetworkBuilder(160, 160, 255000);
         nb.addConvolutionLayer(16, 8);
-//        nb.addPoolLayer(2, 1);
         nb.addConnectedLayer(160);
         nb.addConnectedLayer(2);
         NeuralNetwork nn = nb.build();
@@ -85,8 +84,16 @@ public class AnimalClassifier {
             if("exit".equalsIgnoreCase(imageName))
                 break;
 
+            Image image = null;
             try {
-                Image image = ic.getImage("data/pets/" + imageName + ".jpeg", 0);
+                image = ic.getImage("data/pets/" + imageName + ".jpeg", 0);
+            }catch(Exception e1) {
+                try {
+                    image = ic.getImage("data/pets/" + imageName + ".jpg", 0);
+                }catch(Exception ignored){}
+            }
+
+            if(image != null){
                 if (nn.getOutput(MatrixUtils.matrixToVector(image.data())) == 0)
                     System.out.println("Its a cat");
                 else
@@ -99,7 +106,7 @@ public class AnimalClassifier {
                         nn.train(MatrixUtils.matrixToVector(image.data()), corAns);
                         }
                 }
-            }catch(Exception e){
+            }else{
                 System.out.println("unable to load file. Please reenter...");
             }
         }
