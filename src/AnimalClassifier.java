@@ -1,3 +1,4 @@
+import data.EdgeFilter;
 import data.Image;
 import data.ImageConverter;
 import network.NetworkBuilder;
@@ -16,18 +17,18 @@ public class AnimalClassifier {
         System.out.println("***Animal Classifier***");
 
 
-        ImageConverter ic = new ImageConverter(128);
+        ImageConverter ic = new ImageConverter(256, EdgeFilter.VERTICAL_FILTER);
 
-        NetworkBuilder nb = new NetworkBuilder(128, 128, 25600);
+        NetworkBuilder nb = new NetworkBuilder(256, 256, 256000);
         nb.addConvolutionLayer(16, 8);
-        nb.addPoolLayer(2, 1);
+//        nb.addPoolLayer(2, 1);
         nb.addConnectedLayer(160);
         nb.addConnectedLayer(2);
         NeuralNetwork nn = nb.build();
 
         int numImages = 21;
 
-        List<Image> imagesTrain = new ArrayList<>(40);
+        List<Image> imagesTrain = new ArrayList<>(numImages*2);
 
         for(int i=1; i<=numImages; i++){
             Image image = ic.getImage("data/pets/cat/cat ("+i+").jpeg", 0);
@@ -36,6 +37,17 @@ public class AnimalClassifier {
 
         for(int i=1; i<=numImages; i++){
             Image image = ic.getImage("data/pets/dog/dog ("+i+").jpeg", 1);
+            imagesTrain.add(image);
+        }
+
+        numImages = 6;
+        for(int i=1; i<=numImages; i++){
+            Image image = ic.getImage("data/pets/cat/catT"+i+".jpeg", 0);
+            imagesTrain.add(image);
+        }
+
+        for(int i=1; i<=numImages; i++){
+            Image image = ic.getImage("data/pets/dog/dogT"+i+".jpeg", 1);
             imagesTrain.add(image);
         }
 

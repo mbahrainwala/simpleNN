@@ -8,9 +8,11 @@ import java.io.IOException;
 
 public class ImageConverter {
     private final int size;
+    private final EdgeFilter filter;
 
-    public ImageConverter(int size){
+    public ImageConverter(int size, EdgeFilter filter){
         this.size = size;
+        this.filter = filter;
     }
 
     public Image getImage(String file, int label) throws IOException {
@@ -22,6 +24,9 @@ public class ImageConverter {
         Graphics2D graphics2D = resizedImage.createGraphics();
         graphics2D.drawImage(originalImage, 0, 0, size, size, null);
         graphics2D.dispose();
+
+        EdgeDetection edgeDetection = new EdgeDetection();
+        resizedImage = edgeDetection.detectEdges(resizedImage, filter);
 
         // Convert to grayscale and place it in the data buffer
         double[][] data = new double[size][size];
@@ -44,6 +49,7 @@ public class ImageConverter {
                 data[x][y] = avg;
             }
         }
+
         return new Image(data, label);
     }
 }
