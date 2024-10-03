@@ -30,7 +30,6 @@ public class OCR {
         NetworkBuilder nb = new NetworkBuilder(28, 28, 256000);
         nb.addConvolutionLayer(3,1);
         nb.addPoolLayer(2, 1);
-        nb.addConnectedLayer(32);
         nb.addConnectedLayer(10);
         NeuralNetwork nn = nb.build();
 
