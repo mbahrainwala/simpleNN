@@ -27,7 +27,7 @@ public class OCR {
         player.getOutput(MatrixUtils.matrixToVector(imagesTest.get(testImg).data()));
         System.out.println("\n\n***MaxPoolLayer***\n\n"+player+"\n\n");
 
-        NetworkBuilder nb = new NetworkBuilder(28, 28, 256000);
+        NetworkBuilder nb = new NetworkBuilder(28, 28, 25600);
         nb.addConvolutionLayer(3,1);
         nb.addPoolLayer(2, 1);
         nb.addConnectedLayer(10);
