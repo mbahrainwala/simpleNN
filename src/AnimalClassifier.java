@@ -21,7 +21,7 @@ public class AnimalClassifier {
 
         NetworkBuilder nb = new NetworkBuilder(160, 160, 255000);
         nb.addConvolutionLayer(16, 8);
-        nb.addConnectedLayer(160);
+        nb.addConnectedLayer(1600);
         nb.addConnectedLayer(2);
         NeuralNetwork nn = nb.build();
 
@@ -71,7 +71,7 @@ public class AnimalClassifier {
             }
 
             System.out.println("Rate after epoc "+i+" = "+rate);
-            if(rate >= .975)
+            if(rate >= .98)
                 break;//do not train the model to have no flexibility.
         }
         System.out.println("***Training Complete***");

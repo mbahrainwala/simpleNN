@@ -27,9 +27,10 @@ public class OCR {
         player.getOutput(MatrixUtils.matrixToVector(imagesTest.get(testImg).data()));
         System.out.println("\n\n***MaxPoolLayer***\n\n"+player+"\n\n");
 
-        NetworkBuilder nb = new NetworkBuilder(28, 28, 25600);
+        NetworkBuilder nb = new NetworkBuilder(28, 28, 256000);
         nb.addConvolutionLayer(3,1);
         nb.addPoolLayer(2, 1);
+        nb.addConnectedLayer(32);
         nb.addConnectedLayer(10);
         NeuralNetwork nn = nb.build();
 
@@ -55,8 +56,8 @@ public class OCR {
                     countCorrect++;
                 }
             }
-            System.out.println("\n\n***Accuracy after epoc "+(epoc+1)+"*** -> "+(countCorrect*100.0/imagesTest.size())+"%");
-            if(countCorrect*100.0/imagesTest.size()>90)
+            System.out.println("***Accuracy after epoc "+(epoc+1)+"*** -> "+(countCorrect*100.0/imagesTest.size())+"%");
+            if(countCorrect*100.0/imagesTest.size()>91)
                 break; //do not train the model to have no flexibility.
         }
     }
