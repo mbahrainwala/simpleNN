@@ -28,6 +28,7 @@ public class ConnectedLayer extends Layer{
             return forwardPass;
     }
 
+    private static final double bias = 0.01;
     public double[] forwardPass(double[] input) {
         prevInput = input;
 
@@ -43,7 +44,7 @@ public class ConnectedLayer extends Layer{
 
 
         for(int j = 0; j < numberOuts; j++){
-            out[j] = relU(prevOutput[j]);
+            out[j] = relU(prevOutput[j])-bias;
         }
 
 
