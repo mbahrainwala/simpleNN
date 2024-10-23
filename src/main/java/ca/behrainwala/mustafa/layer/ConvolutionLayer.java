@@ -39,7 +39,7 @@ public class ConvolutionLayer extends Layer{
                     convolutionForwardPass(MatrixUtils.vectorToMatrix(input, imageX, imageY))
                 ));
         else
-            throw new RuntimeException("This cannot be the last ca.mustafa.behrainwala.layer");
+            throw new RuntimeException("This cannot be the last layer");
     }
 
     private double[][] lastInput;

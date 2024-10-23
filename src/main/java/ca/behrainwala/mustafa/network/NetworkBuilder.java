@@ -58,7 +58,7 @@ public class NetworkBuilder {
         if(layers.isEmpty()){
             layers.add(new ConvolutionLayer(rows, cols, filterSize, stepSize, 123));
         } else {
-            throw new IllegalArgumentException("Convolution must be the first ca.mustafa.behrainwala.layer.");
+            throw new IllegalArgumentException("Convolution must be the first layer.");
         }
     }
 
