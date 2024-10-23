@@ -1,6 +1,6 @@
-package layer;
+package ca.behrainwala.mustafa.layer;
 
-import utils.MatrixUtils;
+import ca.behrainwala.mustafa.utils.MatrixUtils;
 
 public class MaxPoolLayer extends Layer{
     private final int _stepSize;

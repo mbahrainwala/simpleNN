@@ -1,4 +1,4 @@
-package data;
+package ca.behrainwala.mustafa.data;
 
 public record Image(double[][] data, int label) {
     public Image(double[][] data, int label) {

@@ -1,7 +1,7 @@
-package network;
+package ca.behrainwala.mustafa.network;
 
-import layer.Layer;
-import utils.MatrixUtils;
+import ca.behrainwala.mustafa.layer.Layer;
+import ca.behrainwala.mustafa.utils.MatrixUtils;
 
 import java.util.List;
 

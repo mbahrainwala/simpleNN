@@ -1,8 +1,10 @@
-import layer.ConnectedLayer;
-import layer.Layer;
-import network.NetworkBuilder;
-import network.NeuralNetwork;
-import utils.MatrixUtils;
+package ca.behrainwala.mustafa;
+
+import ca.behrainwala.mustafa.layer.ConnectedLayer;
+import ca.behrainwala.mustafa.layer.Layer;
+import ca.behrainwala.mustafa.network.NetworkBuilder;
+import ca.behrainwala.mustafa.network.NeuralNetwork;
+import ca.behrainwala.mustafa.utils.MatrixUtils;
 
 public class SimpleNN {
     public static void main(String[] args) {

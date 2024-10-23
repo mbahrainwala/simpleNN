@@ -1,4 +1,4 @@
-package utils;
+package ca.behrainwala.mustafa.utils;
 
 import java.util.Random;
 

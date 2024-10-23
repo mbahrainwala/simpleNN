@@ -1,6 +1,6 @@
-package layer;
+package ca.behrainwala.mustafa.layer;
 
-import utils.MatrixUtils;
+import ca.behrainwala.mustafa.utils.MatrixUtils;
 
 import java.util.Random;
 
@@ -39,7 +39,7 @@ public class ConvolutionLayer extends Layer{
                     convolutionForwardPass(MatrixUtils.vectorToMatrix(input, imageX, imageY))
                 ));
         else
-            throw new RuntimeException("This cannot be the last layer");
+            throw new RuntimeException("This cannot be the last ca.mustafa.behrainwala.layer");
     }
 
     private double[][] lastInput;

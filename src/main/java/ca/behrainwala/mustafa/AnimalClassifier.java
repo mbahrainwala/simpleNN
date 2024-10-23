@@ -1,9 +1,11 @@
-import data.EdgeFilter;
-import data.Image;
-import data.ImageConverter;
-import network.NetworkBuilder;
-import network.NeuralNetwork;
-import utils.MatrixUtils;
+package ca.behrainwala.mustafa;
+
+import ca.behrainwala.mustafa.data.EdgeFilter;
+import ca.behrainwala.mustafa.data.Image;
+import ca.behrainwala.mustafa.data.ImageConverter;
+import ca.behrainwala.mustafa.network.NetworkBuilder;
+import ca.behrainwala.mustafa.network.NeuralNetwork;
+import ca.behrainwala.mustafa.utils.MatrixUtils;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -78,7 +80,7 @@ public class AnimalClassifier {
 
 
         while(true){
-            System.out.print("\n\nPlease enter the image name in relation to data\\pets.\ne.g. cat\\catT1 or dog\\dogT1\n'exit' to leave: ");
+            System.out.print("\n\nPlease enter the image name in relation to ca.mustafa.behrainwala.data\\pets.\ne.g. cat\\catT1 or dog\\dogT1\n'exit' to leave: ");
             Scanner scan= new Scanner(System.in);
             String imageName= scan.nextLine();
             if("exit".equalsIgnoreCase(imageName))

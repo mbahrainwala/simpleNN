@@ -1,4 +1,4 @@
-package data;
+package ca.behrainwala.mustafa.data;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -28,7 +28,7 @@ public class ImageConverter {
         EdgeDetection edgeDetection = new EdgeDetection();
         resizedImage = edgeDetection.detectEdges(resizedImage, filter);
 
-        // Convert to grayscale and place it in the data buffer
+        // Convert to grayscale and place it in the ca.mustafa.behrainwala.data buffer
         double[][] data = new double[size][size];
         for (int y = 0; y < resizedImage.getHeight(); y++) {
             for (int x = 0; x < resizedImage.getWidth(); x++) {

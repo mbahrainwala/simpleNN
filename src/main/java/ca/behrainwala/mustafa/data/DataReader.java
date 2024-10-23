@@ -1,4 +1,4 @@
-package data;
+package ca.behrainwala.mustafa.data;
 
 import java.io.BufferedReader;
 import java.io.FileReader;

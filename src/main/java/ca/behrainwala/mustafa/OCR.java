@@ -1,25 +1,27 @@
-import data.DataReader;
-import data.Image;
-import layer.MaxPoolLayer;
-import network.NetworkBuilder;
-import network.NeuralNetwork;
-import utils.MatrixUtils;
+package ca.behrainwala.mustafa;
+
+import ca.behrainwala.mustafa.data.DataReader;
+import ca.behrainwala.mustafa.data.Image;
+import ca.behrainwala.mustafa.layer.MaxPoolLayer;
+import ca.behrainwala.mustafa.network.NetworkBuilder;
+import ca.behrainwala.mustafa.network.NeuralNetwork;
+import ca.behrainwala.mustafa.utils.MatrixUtils;
 
 import java.util.Collections;
 import java.util.List;
 
 public class OCR {
     public static void main(String[] args) {
-        System.out.println("***OCR***");
-        System.out.println("\n\n***Starting***\n...loading data...\n");
+        System.out.println("***ca.mustafa.behrainwala.OCR***");
+        System.out.println("\n\n***Starting***\n...loading ca.mustafa.behrainwala.data...\n");
 
         List<Image> imagesTest = DataReader.readData("data/mnist_test.csv");
         System.out.println("***Test Data Loaded***");
-        System.out.println("Images in test data: "+imagesTest.size());
+        System.out.println("Images in test ca.mustafa.behrainwala.data: "+imagesTest.size());
 
         List<Image> imagesTrain = DataReader.readData("data/mnist_train.csv");
         System.out.println("***Train Data Loaded***");
-        System.out.println("Images in train data: "+imagesTrain.size());
+        System.out.println("Images in train ca.mustafa.behrainwala.data: "+imagesTrain.size());
 
         int testImg=16;
         System.out.println("\n\n***Image***\n\n"+imagesTest.get(testImg)+"\n\n");

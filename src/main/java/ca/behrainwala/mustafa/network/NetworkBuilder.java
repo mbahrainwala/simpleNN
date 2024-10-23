@@ -1,9 +1,9 @@
-package network;
+package ca.behrainwala.mustafa.network;
 
-import layer.ConnectedLayer;
-import layer.ConvolutionLayer;
-import layer.Layer;
-import layer.MaxPoolLayer;
+import ca.behrainwala.mustafa.layer.ConnectedLayer;
+import ca.behrainwala.mustafa.layer.ConvolutionLayer;
+import ca.behrainwala.mustafa.layer.Layer;
+import ca.behrainwala.mustafa.layer.MaxPoolLayer;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -58,7 +58,7 @@ public class NetworkBuilder {
         if(layers.isEmpty()){
             layers.add(new ConvolutionLayer(rows, cols, filterSize, stepSize, 123));
         } else {
-            throw new IllegalArgumentException("Convolution must be the first layer.");
+            throw new IllegalArgumentException("Convolution must be the first ca.mustafa.behrainwala.layer.");
         }
     }
 

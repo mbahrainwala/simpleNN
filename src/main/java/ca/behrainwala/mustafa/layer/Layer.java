@@ -1,4 +1,4 @@
-package layer;
+package ca.behrainwala.mustafa.layer;
 
 public abstract class Layer {
     private Layer prevLayer;

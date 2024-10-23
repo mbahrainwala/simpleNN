@@ -1,4 +1,4 @@
-package data;
+package ca.behrainwala.mustafa.data;
 
 /**
  * Code copied from
