@@ -28,3 +28,5 @@ replay_pid*
 /ca.mustafa.behrainwala.data/mnist_train.csv
 /ca.mustafa.behrainwala.data/mnist_test.csv
 /target/
+/data/mnist_test.csv
+/data/mnist_train.csv
