@@ -1,31 +1,6 @@
 package ca.behrainwala.mustafa.data;
 
 public record Image(double[][] data, int label) {
-    public Image(double[][] data, int label) {
-        this.label = label;
-
-        if (data == null) {
-            this.data = null;
-            return;
-        }
-
-        int length = data.length;
-        this.data = new double[length][data[0].length];
-        for (int i = 0; i < length; i++) {
-            System.arraycopy(data[i], 0, this.data[i], 0, data[i].length);
-        }
-    }
-
-    @Override
-    public double[][] data() {
-        int length = this.data.length;
-        double[][] target = new double[length][this.data[0].length];
-        for (int i = 0; i < length; i++) {
-            System.arraycopy(this.data[i], 0, target[i], 0, this.data[i].length);
-        }
-        return target;
-    }
-
     private static final char FULL_BLOCK= '█';
     private static final char MEDIUM_SHADE= '▒';
     private static final char LIGHT_SHADE= '░';
