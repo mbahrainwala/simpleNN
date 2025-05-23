@@ -16,13 +16,16 @@ public class SimpleNN {
         SimpleNN.testXOR();
     }
 
+    private static final double ZERO=0;
+    private static final double ONE=.9;
+
     private static void testOR() {
         System.out.println("Testing OR");
 
-        double[][] train = {{0,1}, {1,1}, {1,0}, {0,0}};
+        double[][] train = {{ZERO,ONE}, {ONE,ONE}, {ONE,ZERO}, {ZERO,ZERO}};
         double[][] out = {{0,1}, {0,1}, {0,1}, {1,0}};
 
-        double[][] test = {{0, 0}, {0, 1}, {1, 0}, {1, 1}};
+        double[][] test = {{ZERO, ZERO}, {ZERO, ONE}, {ONE, ZERO}, {ONE, ONE}};
 
         Layer nn = new ConnectedLayer(2, 2);
 
@@ -114,38 +117,34 @@ public class SimpleNN {
                 {.148, .62, 0}
         };
 
-        NetworkBuilder nb = new NetworkBuilder(3, 1);
-        nb.addConnectedLayer(4);
-        nb.addConnectedLayer(2);
-        NeuralNetwork nn = nb.build();
+        Layer nn = new ConnectedLayer(3, 2);
 
         System.out.println("Before training");
-        for (double[] doubles : test) System.out.println(doubles[0]+", "+doubles[1]+", "+doubles[2]+"-->"+nn.getOutput(doubles));
+        for (double[] doubles : test) System.out.println(doubles[0]+", "+doubles[1]+", "+doubles[2]+"-->"+MatrixUtils.getMaxIndex(nn.getOutput(doubles)));
 
         for(int epoch=0; epoch<100000; epoch++) {
             for (int i = 0; i < train.length; i++) {
-                nn.train(train[i], MatrixUtils.getMaxIndex(out[i]));
+                double[] output = nn.getOutput(train[i]);
+                double[] error = MatrixUtils.addArrays(output, MatrixUtils.multiplyScalar(out[i], -1));
+                nn.backPropagate(error);
             }
         }
 
         System.out.println("After training");
 
-        for (double[] doubles : test) System.out.println(doubles[0]+", "+doubles[1]+", "+doubles[2]+"-->"+nn.getOutput(doubles));
+        for (double[] doubles : test) System.out.println(doubles[0]+", "+doubles[1]+", "+doubles[2]+"-->"+MatrixUtils.getMaxIndex(nn.getOutput(doubles)));
     }
 
     private static void testXOR() {
         System.out.println("\n\nTesting XOR");
 
-        double zero = 0;
-        double one = 1;
-
-        double[][] train = {{zero,one}, {one,one}, {one,zero}, {zero,zero}};
+        double[][] train = {{ZERO,ONE}, {ONE,ONE}, {ONE,ZERO}, {ZERO,ZERO}};
         int[] out = {1, 0, 1, 0};
 
-        double[][] test = {{zero, zero}, {zero, one}, {one, zero}, {one, one}};
+        double[][] test = {{ZERO, ZERO}, {ZERO, ONE}, {ONE, ZERO}, {ONE, ONE}};
 
         NetworkBuilder nb = new NetworkBuilder(2, 1);
-        nb.addConnectedLayer(4);
+        nb.addConnectedLayer(3);
         nb.addConnectedLayer(2);
         NeuralNetwork nn = nb.build();
 
