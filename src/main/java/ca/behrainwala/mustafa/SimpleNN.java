@@ -16,33 +16,34 @@ public class SimpleNN {
         SimpleNN.testXOR();
     }
 
-    private static final double ZERO=0;
+    private static final double ZERO=.1;
     private static final double ONE=.9;
 
     private static void testOR() {
         System.out.println("Testing OR");
 
         double[][] train = {{ZERO,ONE}, {ONE,ONE}, {ONE,ZERO}, {ZERO,ZERO}};
-        double[][] out = {{0,1}, {0,1}, {0,1}, {1,0}};
+        int[] out = {1, 1, 1, 0};
 
         double[][] test = {{ZERO, ZERO}, {ZERO, ONE}, {ONE, ZERO}, {ONE, ONE}};
 
-        Layer nn = new ConnectedLayer(2, 2);
+        NetworkBuilder nb = new NetworkBuilder(2, 1);
+        nb.addConnectedLayer(3);
+        nb.addConnectedLayer(2);
+        NeuralNetwork nn = nb.build();
 
         System.out.println("Before training");
-        for (double[] doubles : test) System.out.println(doubles[0]+", "+doubles[1]+"-->"+MatrixUtils.getMaxIndex(nn.getOutput(doubles)));
+        for (double[] doubles : test) System.out.println(doubles[0]+", "+doubles[1]+"-->"+nn.getOutput(doubles));
 
-        for(int epoch=0; epoch<1000; epoch++) {
+        for(int epoch=0; epoch<100000; epoch++) {
             for (int i = 0; i < train.length; i++) {
-                double[] output = nn.getOutput(train[i]);
-                double[] error = MatrixUtils.addArrays(output, MatrixUtils.multiplyScalar(out[i], -1));
-                nn.backPropagate(error);
+                nn.train(train[i], out[i]);
             }
         }
 
         System.out.println("After training");
 
-        for (double[] doubles : test) System.out.println(doubles[0]+", "+doubles[1]+"-->"+MatrixUtils.getMaxIndex(nn.getOutput(doubles)));
+        for (double[] doubles : test) System.out.println(doubles[0]+", "+doubles[1]+"-->"+nn.getOutput(doubles));
     }
 
     private static void testAdultORChild() {
