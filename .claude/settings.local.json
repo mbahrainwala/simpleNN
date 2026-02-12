@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mvn compile:*)",
+      "Bash(mvn exec:java:*)",
+      "Bash(mvn test:*)",
+      "Bash(dir:*)",
+      "Bash(find:*)",
+      "Bash(ls:*)",
+      "Bash(mvn cobertura:cobertura:*)",
+      "Bash(mvn clean test jacoco:report:*)",
+      "Bash(mvn jacoco:report:*)",
+      "Bash(powershell:*)",
+      "Bash(findstr:*)"
+    ]
+  }
+}

@@ -53,12 +53,53 @@ public class NetworkBuilderTest {
         assertNotNull("Neural network with pool layer should be created", nn);
     }
 
+    @Test
+    public void testAddPoolLayerWhenNotEmpty() {
+        NetworkBuilder nb = new NetworkBuilder(16, 16, 256);
+        // First add a layer to make the list non-empty
+        nb.addConnectedLayer(8);
+        // Then add a pool layer (this should hit the else branch)
+        nb.addPoolLayer(2, 2);
+        NeuralNetwork nn = nb.build();
+
+        assertNotNull("Neural network with pool layer on non-empty list should be created", nn);
+    }
+
     @Test(expected = IllegalArgumentException.class)
     public void testInvalidConvolutionLayerPosition() {
         NetworkBuilder nb = new NetworkBuilder(28, 28, 256);
         nb.addConnectedLayer(10);
         // This should throw exception since convolution must be first layer
         nb.addConvolutionLayer(5, 2);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testInvalidConvolutionFilterSize() {
+        NetworkBuilder nb = new NetworkBuilder(4, 4, 256);
+        // This should throw exception since filter size (5) is larger than image dimensions (4x4)
+        nb.addConvolutionLayer(5, 2);
+    }
+
+    @Test
+    public void testValidConvolutionFirstLayer() {
+        NetworkBuilder nb = new NetworkBuilder(28, 28, 256);
+        // This should work since convolution is the first layer and filter size is valid
+        nb.addConvolutionLayer(5, 2);
+        nb.addConnectedLayer(10);
+        NeuralNetwork nn = nb.build();
+
+        assertNotNull("Neural network with valid convolution layer should be created", nn);
+    }
+
+    @Test
+    public void testValidConvolutionSmallFilter() {
+        NetworkBuilder nb = new NetworkBuilder(4, 4, 256);
+        // This should work since filter size (3) is smaller than image dimensions (4x4)
+        nb.addConvolutionLayer(3, 1);
+        nb.addConnectedLayer(10);
+        NeuralNetwork nn = nb.build();
+
+        assertNotNull("Neural network with small valid convolution layer should be created", nn);
     }
 
     @Test
