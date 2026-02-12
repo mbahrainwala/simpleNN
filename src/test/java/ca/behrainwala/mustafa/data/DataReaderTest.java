@@ -1,7 +1,5 @@
-package ca.mustafa.behrainwala.data;
+package ca.behrainwala.mustafa.data;
 
-import ca.behrainwala.mustafa.data.DataReader;
-import ca.behrainwala.mustafa.data.Image;
 import org.junit.Test;
 
 import java.io.BufferedWriter;
