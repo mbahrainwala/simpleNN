@@ -11,7 +11,13 @@
       "Bash(mvn clean test jacoco:report:*)",
       "Bash(mvn jacoco:report:*)",
       "Bash(powershell:*)",
-      "Bash(findstr:*)"
+      "Bash(findstr:*)",
+      "Bash(wc:*)",
+      "Bash(cat:*)",
+      "Bash(curl:*)",
+      "Bash(/c/dev/workspace/simpleNN/data/books/gen_knowledge.sh:*)",
+      "Bash(bash:*)",
+      "Bash(mvn:*)"
     ]
   }
 }

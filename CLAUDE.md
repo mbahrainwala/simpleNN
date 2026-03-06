@@ -4,71 +4,58 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a Java-based neural network implementation designed as an educational example. The project demonstrates how to build neural networks from scratch, with examples for classifying handwritten digits (MNIST dataset) and other classification tasks.
-
-## Repository Structure
-
-- `src/main/java/ca/behrainwala/mustafa/` - Main source code
-- `src/test/java/ca/behrainwala/mustafa/` - Unit tests
-- `data/` - Dataset files (MNIST training/testing data, book texts, pet images)
-- Root directory contains build configuration and documentation
-
-## Architecture Overview
-
-The neural network implementation follows a layered architecture:
-
-1. **Core Components**:
-   - `NeuralNetwork` - Main orchestrator that manages layers and training
-   - `Layer` - Abstract base class for different layer types
-   - `ConnectedLayer` - Fully connected neural network layer with ReLU activation
-   - `NetworkBuilder` - Builder pattern for constructing neural networks
-
-2. **Key Features**:
-   - Forward propagation through connected layers
-   - Backpropagation with gradient descent
-   - ReLU activation function with leaky derivative
-   - Support for multi-layer architectures
-   - MNIST digit recognition capabilities
-
-3. **Data Processing**:
-   - `DataReader` - Reads CSV datasets
-   - `DirectoryReader` - Reads image datasets from directories
-   - Various utility classes for image processing and matrix operations
+A from-scratch Java neural network library (Java 17, Maven) used for educational examples: logic gates (OR/XOR), height/weight classification, MNIST digit recognition (OCR), pet image classification, and a minimal language model (SimpleLLM) that trains on classic literature.
 
 ## Development Commands
 
-### Build and Run
 ```bash
-mvn compile
-mvn exec:java -Dexec.mainClass="ca.behrainwala.mustafa.SimpleNN"
+mvn compile                    # Compile
+mvn test                       # Run all tests (JUnit 5 + JaCoCo coverage)
+mvn -Dtest=ConnectedLayerTest#testForwardPass test   # Single test method
+mvn clean install              # Full clean build
+mvn exec:java -Dexec.mainClass="ca.behrainwala.mustafa.SimpleNN"     # Run basic examples
+mvn exec:java -Dexec.mainClass="ca.behrainwala.mustafa.OCR"          # Run MNIST (requires extracted data)
+mvn exec:java -Dexec.mainClass="ca.behrainwala.mustafa.SimpleLLM"    # Run language model
 ```
 
-### Testing
-```bash
-mvn test
-```
+MNIST data: extract `data/mnist_train.7z` and `data/mnist_test.7z` before running OCR.
 
-### Run Specific Tests
-```bash
-mvn -Dtest=NeuralNetworkTest#testGetOutput test
-```
+## Architecture
 
-### Clean Build
-```bash
-mvn clean install
-```
+### Layer Pipeline
 
-## Data Preparation
+All layers extend `Layer` (abstract), which defines the contract: `getOutput()`, `backPropagate()`, dimension queries, and optional `saveWeights()`/`restoreWeights()`. Layers form a doubly-linked chain via `prevLayer`/`nextLayer` pointers set by `NeuralNetwork.linkLayers()`.
 
-Before running MNIST examples, extract the compressed dataset files:
-- Extract `data/mnist_train.7z` and `data/mnist_test.7z` to the same data folder
+Forward pass is recursive: each layer's `getOutput()` computes its result, then calls `getNextLayer().getOutput()`. Backpropagation flows in reverse: the last layer's `backPropagate()` calls `getPrevLayer().backPropagate()`.
 
-## Key Implementation Details
+**Layer types:**
+- `ConnectedLayer` — fully connected with ReLU activation (leaky derivative, leak=0.01, bias=0.01, lr=0.1). Weights initialized with Gaussian N(0,1) from seed 123.
+- `ConvolutionLayer` — single-filter convolution. Must be the first layer. Learns filter via backprop (lr=0.01).
+- `MaxPoolLayer` — max pooling with position tracking for backprop gradient routing. No trainable weights.
+- `WordVectorGraphLayer` — co-occurrence-based word embeddings (not trained by gradient descent). Converts token IDs to concatenated embedding vectors. Must be the first layer when used.
 
-1. **Training Process**: Uses stochastic gradient descent with backpropagation
-2. **Activation Function**: ReLU with leaky derivative for smoother gradients
-3. **Learning Rate**: Configurable per layer (default 0.1)
-4. **Bias Handling**: Small constant bias applied in activation function
-5. **Scale Factor**: Input normalization handled in NeuralNetwork class
+### Network Construction
 
-The main entry point is `SimpleNN.java` which demonstrates various classification examples including OR, XOR, and adult/child classification based on height/weight measurements.
+`NetworkBuilder` uses the builder pattern. It infers each layer's input size from the previous layer's output. `NeuralNetwork` is the top-level orchestrator: it scales inputs by `1/scaleFactor`, drives forward/backward passes, and provides `saveWeights()`/`restoreWeights()` for epoch rollback.
+
+### Data Pipeline
+
+- `DataReader` — reads CSV datasets (MNIST format: label in first column, pixel values following)
+- `DirectoryReader` — reads images from labeled subdirectories
+- `Image` — record holding `double[][] data` and `int label`
+- `ImageConverter` / `EdgeDetection` / `EdgeFilter` — image preprocessing utilities
+- `BookDataLoader` — loads `.txt` files from a directory, builds word frequency vocabularies, tokenizes text, finds valid training positions
+- `TextToken` — bidirectional word-to-integer token mapping (token 0 = unknown, tokens assigned sequentially starting at 1)
+
+### Entry Points
+
+- `SimpleNN` — OR, XOR, adult/child classification demos using raw `ConnectedLayer` and `NetworkBuilder`
+- `OCR` — MNIST digit recognition: MaxPool → Connected(160) → Connected(10)
+- `AnimalClassifier` — pet image classification from directory of labeled images
+- `SimpleLLM` — minimal language model: WordVectorGraph → Connected(256) → Connected(vocabSize), trains on classic literature with temperature-based sampling and interactive chat mode
+
+### Key Conventions
+
+- `MatrixUtils` provides all linear algebra: weight initialization, scalar/matrix operations, vector↔matrix conversions, argmax (`getMaxIndex`)
+- Training error is computed as `output - one_hot(target)` (target index set to -1, then added to output)
+- Input normalization via `scaleFactor` is applied inside `NeuralNetwork`, except when `WordVectorGraphLayer` is present (it handles scaling internally, so `NeuralNetwork` gets scaleFactor=1)
