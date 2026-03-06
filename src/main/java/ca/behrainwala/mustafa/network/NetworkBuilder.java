@@ -4,6 +4,7 @@ import ca.behrainwala.mustafa.layer.ConnectedLayer;
 import ca.behrainwala.mustafa.layer.ConvolutionLayer;
 import ca.behrainwala.mustafa.layer.Layer;
 import ca.behrainwala.mustafa.layer.MaxPoolLayer;
+import ca.behrainwala.mustafa.layer.WordVectorGraphLayer;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,6 +42,14 @@ public class NetworkBuilder {
         }
     }
 
+    public void addOutputLayer(int numOutputs){
+        if(layers.isEmpty()){
+            layers.add(new ConnectedLayer(numInputs, numOutputs, false));
+        } else {
+            layers.add(new ConnectedLayer(layers.get(layers.size()-1).getNumberOutput(), numOutputs, false));
+        }
+    }
+
     public void addPoolLayer(int windowSize, int stepSize){
         if(layers.isEmpty()){
             layers.add(new MaxPoolLayer(stepSize, windowSize, rows, cols));
@@ -49,6 +58,30 @@ public class NetworkBuilder {
                     , layers.get(layers.size()-1).getOutputRows()
                     , layers.get(layers.size()-1).getOutputCols()));
         }
+    }
+
+    /**
+     * Adds a WordVectorGraph as the first layer in the network.
+     * Must be called before any other layer is added.
+     *
+     * The WordVectorGraph layer converts raw token IDs into embedding vectors,
+     * so the network handles the full pipeline: token IDs -> embeddings -> hidden -> output.
+     *
+     * @param tokenIds     Array of token IDs representing the full text corpus
+     * @param vocabSize    Total vocabulary size
+     * @param embeddingDim Number of dimensions for each word vector
+     * @param contextSize  Number of tokens in the context window
+     * @return The created WordVectorGraph instance (for calling printWordClusters, etc.)
+     */
+    public WordVectorGraphLayer addWordVectorLayer(int[] tokenIds, int vocabSize,
+                                                   int embeddingDim, int contextSize) {
+        if (!layers.isEmpty()) {
+            throw new IllegalArgumentException("WordVectorGraph must be the first layer.");
+        }
+        WordVectorGraphLayer wvg = new WordVectorGraphLayer(tokenIds, vocabSize, embeddingDim,
+                contextSize, scaleFactor);
+        layers.add(wvg);
+        return wvg;
     }
 
     public void addConvolutionLayer(int filterSize, int stepSize){
@@ -63,6 +96,10 @@ public class NetworkBuilder {
     }
 
     public NeuralNetwork build(){
-        return new NeuralNetwork(layers, scaleFactor);
+        // When WordVectorGraph is the first layer, it handles scaling internally,
+        // so pass scaleFactor=1 to NeuralNetwork (making its scaling a no-op).
+        double networkScaleFactor = (!layers.isEmpty() && layers.get(0) instanceof WordVectorGraphLayer)
+                ? 1.0 : scaleFactor;
+        return new NeuralNetwork(layers, networkScaleFactor);
     }
 }

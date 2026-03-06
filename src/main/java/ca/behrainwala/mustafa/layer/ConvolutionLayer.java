@@ -119,6 +119,25 @@ public class ConvolutionLayer extends Layer{
         return (imageY-filterSize)/stepSize+1;
     }
 
+    private double[][] savedFilter;
+
+    @Override
+    public void saveWeights() {
+        savedFilter = new double[filterSize][filterSize];
+        for (int i = 0; i < filterSize; i++) {
+            System.arraycopy(filter[i], 0, savedFilter[i], 0, filterSize);
+        }
+    }
+
+    @Override
+    public void restoreWeights() {
+        if (savedFilter != null) {
+            for (int i = 0; i < filterSize; i++) {
+                System.arraycopy(savedFilter[i], 0, filter[i], 0, filterSize);
+            }
+        }
+    }
+
     /**
      * This will create a spaced out matrix based on our input.
      */

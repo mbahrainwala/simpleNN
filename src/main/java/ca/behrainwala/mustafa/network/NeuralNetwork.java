@@ -25,18 +25,36 @@ public class NeuralNetwork {
 
             layers.get(i).setNextLayer(layers.get(i+1));
         }
+        layers.get(layers.size()-1).setPrevLayer(layers.get(layers.size()-2));
     }
 
     public int getOutput(double[] input) {
         return MatrixUtils.getMaxIndex(layers.get(0).getOutput(MatrixUtils.multiplyScalar(input, 1/scaleFactor)));
     }
 
-    public void train(double[] train, int ans) {
+    public double[] getOutputArray(double[] input) {
+        return layers.get(0).getOutput(MatrixUtils.multiplyScalar(input, 1/scaleFactor));
+    }
+
+    public int train(double[] train, int ans) {
         double[] output = layers.get(0).getOutput(MatrixUtils.multiplyScalar(train, 1/scaleFactor));
         double[] correctResp = new double[output.length];
         correctResp[ans] = -1;
         double[] error = MatrixUtils.addArrays(output, correctResp);
 
         layers.get(layers.size() - 1).backPropagate(error);
+        return MatrixUtils.getMaxIndex(output);
+    }
+
+    public void saveWeights() {
+        for (Layer layer : layers) {
+            layer.saveWeights();
+        }
+    }
+
+    public void restoreWeights() {
+        for (Layer layer : layers) {
+            layer.restoreWeights();
+        }
     }
 }

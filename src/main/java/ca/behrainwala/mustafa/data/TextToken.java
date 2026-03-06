@@ -4,12 +4,17 @@ import java.util.*;
 
 public class TextToken {
     private final Map<String, Integer> tokens = new HashMap<>();
-    private final List<String> nonTokenText = Arrays.asList(",", ":", ".", "?", "-", "—", "!", "'", "`", "\"", ";", "’");
+    private final ArrayList<String> reverseMap = new ArrayList<>();
+    private final List<String> nonTokenText = Arrays.asList(",", ":", ".", "?", "-", "—", "!", "’", "`", "\"", ";", "’");
     private Integer nextToken=1;
 
     public static final String END="<$$>";
 
     private final Object lock = new Object();
+
+    public TextToken() {
+        reverseMap.add(END); // index 0 = unknown token
+    }
 
     public void addTextToToken(String text){
         if(!nonTokenText.contains(text)){
@@ -17,6 +22,7 @@ public class TextToken {
             if(!tokens.containsKey(text))
             {
                 tokens.put(text, nextToken);
+                reverseMap.add(text);
                 synchronized (lock){
                     nextToken++;
                 }
@@ -30,16 +36,14 @@ public class TextToken {
     }
 
     public String getTokenText(int token){
-        for(String text:tokens.keySet()){
-            if(tokens.get(text)==token)
-                return text;
-        }
+        if(token >= 0 && token < reverseMap.size())
+            return reverseMap.get(token);
 
         return END;
     }
 
     public int getTokenSize(){
-        return tokens.keySet().size();
+        return tokens.size();
     }
 
     private String cleanText(String text){

@@ -7,10 +7,16 @@ public class ConnectedLayer extends Layer{
 
     private final int numberInps;
     private final int numberOuts;
+    private final boolean useRelu;
 
     public ConnectedLayer(int numberInps, int numberOuts) {
+        this(numberInps, numberOuts, true);
+    }
+
+    public ConnectedLayer(int numberInps, int numberOuts, boolean useRelu) {
         this.numberInps = numberInps;
         this.numberOuts = numberOuts;
+        this.useRelu = useRelu;
 
         weights = MatrixUtils.initializeWeights(numberInps, numberOuts);
     }
@@ -44,7 +50,7 @@ public class ConnectedLayer extends Layer{
 
 
         for(int j = 0; j < numberOuts; j++){
-            out[j] = relU(prevOutput[j])-bias;
+            out[j] = useRelu ? relU(prevOutput[j])-bias : prevOutput[j];
         }
 
 
@@ -59,10 +65,11 @@ public class ConnectedLayer extends Layer{
 
         for(int rows=0; rows<numberInps; rows++) {
             for(int cols=0; cols<numberOuts; cols++) {
-                double cost = error[cols] * dervRelU(prevOutput[cols])*prevInput[rows];
+                double derv = useRelu ? dervRelU(prevOutput[cols]) : 1.0;
+                double cost = error[cols] * derv * prevInput[rows];
 
                 if(getPrevLayer() != null)
-                    backError[rows] += error[cols] * dervRelU(prevOutput[cols]) * weights[rows][cols];
+                    backError[rows] += error[cols] * derv * weights[rows][cols];
 
                 weights[rows][cols] = weights[rows][cols] - (cost*learningRate);
             }
@@ -91,4 +98,23 @@ public class ConnectedLayer extends Layer{
 
     @Override
     public int getOutputCols() { return numberOuts/getOutputRows();}
+
+    private double[][] savedWeights;
+
+    @Override
+    public void saveWeights() {
+        savedWeights = new double[numberInps][numberOuts];
+        for (int i = 0; i < numberInps; i++) {
+            System.arraycopy(weights[i], 0, savedWeights[i], 0, numberOuts);
+        }
+    }
+
+    @Override
+    public void restoreWeights() {
+        if (savedWeights != null) {
+            for (int i = 0; i < numberInps; i++) {
+                System.arraycopy(savedWeights[i], 0, weights[i], 0, numberOuts);
+            }
+        }
+    }
 }

@@ -25,7 +25,7 @@ public class AnimalClassifier {
         nb.addConvolutionLayer(16, 8);
         nb.addPoolLayer(2, 1);
         nb.addConnectedLayer(1600);
-        nb.addConnectedLayer(2);
+        nb.addOutputLayer(2);
         NeuralNetwork nn = nb.build();
 
         int numImages = 21;

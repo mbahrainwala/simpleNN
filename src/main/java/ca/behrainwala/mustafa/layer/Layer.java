@@ -29,4 +29,10 @@ public abstract class Layer {
     public abstract int getOutputRows();
 
     public abstract int getOutputCols();
+
+    /** Saves a snapshot of trainable weights. Default no-op for layers without weights. */
+    public void saveWeights() {}
+
+    /** Restores weights from the last saved snapshot. Default no-op for layers without weights. */
+    public void restoreWeights() {}
 }
