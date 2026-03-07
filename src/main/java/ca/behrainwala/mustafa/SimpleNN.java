@@ -29,7 +29,7 @@ public class SimpleNN {
 
         NetworkBuilder nb = new NetworkBuilder(2, 1);
         nb.addConnectedLayer(3);
-        nb.addConnectedLayer(2);
+        nb.addOutputLayer(2);
         NeuralNetwork nn = nb.build();
 
         System.out.println("Before training");
@@ -146,7 +146,7 @@ public class SimpleNN {
 
         NetworkBuilder nb = new NetworkBuilder(2, 1);
         nb.addConnectedLayer(3);
-        nb.addConnectedLayer(2);
+        nb.addOutputLayer(2);
         NeuralNetwork nn = nb.build();
 
         System.out.println("Before training");
