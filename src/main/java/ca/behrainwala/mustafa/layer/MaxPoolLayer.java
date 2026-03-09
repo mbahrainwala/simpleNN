@@ -46,8 +46,8 @@ public class MaxPoolLayer extends Layer{
                 errorToPropagate[max_x][max_y] += errorMatrix[r][c];
             }
         }
-
-        getPrevLayer().backPropagate(MatrixUtils.matrixToVector(errorToPropagate));
+        if(getPrevLayer() != null)
+            getPrevLayer().backPropagate(MatrixUtils.matrixToVector(errorToPropagate));
     }
 
     @Override
