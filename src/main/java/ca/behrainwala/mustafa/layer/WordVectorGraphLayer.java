@@ -90,6 +90,10 @@ public class WordVectorGraphLayer extends Layer {
     /** Word vectors: vectors[tokenId] = embedding for that token */
     private final double[][] vectors;
 
+    /** Pre-scaled vectors: vectors[i][d] / scaleFactor, computed once at construction.
+     *  Eliminates repeated division during every forward pass. */
+    private double[][] scaledVectors;
+
     /** Number of words in the vocabulary (including token 0 = unknown) */
     private final int vocabSize;
 
@@ -104,6 +108,21 @@ public class WordVectorGraphLayer extends Layer {
 
     /** Co-occurrence window size (how many words left/right to look) */
     private static final int WINDOW_SIZE = 5;
+
+    // ==================== Generation Cache (KV Cache analogue) ====================
+    // During autoregressive generation, the context window slides by 1 token each step.
+    // 31 out of 32 token embeddings are identical to the previous step.
+    // The cache shifts the previous embeddings left and only computes the new token's
+    // embedding, avoiding ~97% of redundant work per generation step.
+
+    /** Reusable output buffer — avoids allocating a new array every forward pass */
+    private double[] outputBuffer;
+
+    /** Cached token IDs from the previous forward pass (for shift detection) */
+    private double[] cachedInput;
+
+    /** Whether generation cache is active */
+    private boolean generationCacheEnabled = false;
 
     /**
      * Builds word vectors from a tokenized text corpus.
@@ -151,6 +170,45 @@ public class WordVectorGraphLayer extends Layer {
         this.scaleFactor = scaleFactor;
 
         buildVectors(tokenIds);
+        buildScaledVectors();
+
+        if (contextSize > 0) {
+            outputBuffer = new double[contextSize * this.embeddingDim];
+        }
+    }
+
+    /**
+     * Pre-computes vectors[i][d] / scaleFactor for every token.
+     * Called once at construction so getOutput() can use System.arraycopy
+     * instead of element-by-element division on every forward pass.
+     */
+    private void buildScaledVectors() {
+        scaledVectors = new double[vocabSize][embeddingDim];
+        for (int i = 0; i < vocabSize; i++) {
+            for (int d = 0; d < embeddingDim; d++) {
+                scaledVectors[i][d] = vectors[i][d] / scaleFactor;
+            }
+        }
+    }
+
+    /**
+     * Enables the generation cache for autoregressive text generation.
+     * When enabled, getOutput() detects when the input is a shift-by-1
+     * of the previous input and reuses cached embeddings for the
+     * unchanged positions (analogous to a KV cache in transformers).
+     */
+    public void enableGenerationCache() {
+        generationCacheEnabled = true;
+        cachedInput = null;
+    }
+
+    /**
+     * Disables the generation cache. Should be called before training
+     * to avoid stale cache interference with gradient updates.
+     */
+    public void disableGenerationCache() {
+        generationCacheEnabled = false;
+        cachedInput = null;
     }
 
     /**
@@ -223,39 +281,6 @@ public class WordVectorGraphLayer extends Layer {
             return new double[embeddingDim]; // zero vector for invalid tokens
         }
         return vectors[tokenId];
-    }
-
-    /**
-     * Returns the dimensionality of the word vectors.
-     */
-    public int getEmbeddingDim() {
-        return embeddingDim;
-    }
-
-    /**
-     * Builds a neural network input array by replacing each token ID with its
-     * embedding vector. This creates a richer input than raw token IDs.
-     *
-     * Raw token IDs:  [42, 15, 3, 8]    -> input length = 4
-     * With embeddings: [vec(42), vec(15), vec(3), vec(8)] -> input length = 4 * embeddingDim
-     *
-     * Each position in the context window contributes embeddingDim features
-     * instead of just 1 feature. This gives the network much more information
-     * about each word's meaning and relationships.
-     *
-     * @param tokenIds    The full token sequence
-     * @param startPos    Starting position in the token sequence
-     * @param contextSize Number of tokens in the context window
-     * @return Input array of length contextSize * embeddingDim
-     */
-    public double[] buildInput(int[] tokenIds, int startPos, int contextSize) {
-        double[] input = new double[contextSize * embeddingDim];
-        for (int j = 0; j < contextSize; j++) {
-            int token = tokenIds[startPos + j];
-            double[] vec = getVector(token);
-            System.arraycopy(vec, 0, input, j * embeddingDim, embeddingDim);
-        }
-        return input;
     }
 
     /**
@@ -369,7 +394,7 @@ public class WordVectorGraphLayer extends Layer {
                 sb.append(String.format("%s(%.2f) ", simWord, sim));
             }
 
-            System.out.println(sb.toString());
+            System.out.println(sb);
         }
         System.out.println();
     }
@@ -381,23 +406,74 @@ public class WordVectorGraphLayer extends Layer {
      *
      * Input is contextSize doubles where each value is a token ID.
      * Output is contextSize * embeddingDim doubles (the concatenated embeddings),
-     * divided by scaleFactor. The result is passed to the next layer.
+     * pre-divided by scaleFactor (using cached scaledVectors).
+     *
+     * When generation cache is enabled, detects shift-by-1 input patterns and
+     * reuses the previous output — only computing the new token's embedding.
+     * This is analogous to a KV cache in transformer models: during autoregressive
+     * generation, only the newest position changes, so we avoid recomputing
+     * embeddings for the (contextSize - 1) unchanged positions.
      */
     @Override
     public double[] getOutput(double[] input) {
-        double[] output = new double[contextSize * embeddingDim];
-        for (int j = 0; j < contextSize; j++) {
-            int token = (int) Math.round(input[j]);
-            double[] vec = getVector(token);
-            for (int d = 0; d < embeddingDim; d++) {
-                output[j * embeddingDim + d] = vec[d] / scaleFactor;
+        if (generationCacheEnabled && cachedInput != null) {
+            // Check if input is a left-shift-by-1 of the previous input.
+            // In autoregressive generation, context slides: [t0,t1,...,tN] -> [t1,t2,...,tN,new]
+            boolean isShift = true;
+            for (int j = 0; j < contextSize - 1; j++) {
+                if (input[j] != cachedInput[j + 1]) {
+                    isShift = false;
+                    break;
+                }
+            }
+            if (isShift) {
+                // Shift cached embeddings left by embeddingDim (discard oldest position)
+                System.arraycopy(outputBuffer, embeddingDim, outputBuffer, 0,
+                        (contextSize - 1) * embeddingDim);
+                // Only compute the new token's embedding (last position)
+                int token = (int) Math.round(input[contextSize - 1]);
+                double[] scaled = getScaledVector(token);
+                System.arraycopy(scaled, 0, outputBuffer, (contextSize - 1) * embeddingDim, embeddingDim);
+                // Update cached input
+                System.arraycopy(input, 0, cachedInput, 0, contextSize);
+
+                if (getNextLayer() != null)
+                    return getNextLayer().getOutput(outputBuffer);
+                else
+                    return outputBuffer;
             }
         }
 
+        // Full computation: look up pre-scaled embedding for each token position
+        for (int j = 0; j < contextSize; j++) {
+            int token = (int) Math.round(input[j]);
+            double[] scaled = getScaledVector(token);
+            System.arraycopy(scaled, 0, outputBuffer, j * embeddingDim, embeddingDim);
+        }
+
+        // Cache the input for shift detection on the next call
+        if (generationCacheEnabled) {
+            if (cachedInput == null) {
+                cachedInput = new double[contextSize];
+            }
+            System.arraycopy(input, 0, cachedInput, 0, contextSize);
+        }
+
         if (getNextLayer() != null)
-            return getNextLayer().getOutput(output);
+            return getNextLayer().getOutput(outputBuffer);
         else
-            return output;
+            return outputBuffer;
+    }
+
+    /**
+     * Returns the pre-scaled embedding vector for a given token.
+     * Uses the cached scaledVectors table (computed once at construction).
+     */
+    private double[] getScaledVector(int tokenId) {
+        if (tokenId < 0 || tokenId >= vocabSize) {
+            return new double[embeddingDim];
+        }
+        return scaledVectors[tokenId];
     }
 
     /**
@@ -408,6 +484,9 @@ public class WordVectorGraphLayer extends Layer {
     public void backPropagate(double[] error) {
         // No trainable weights — embeddings are fixed
     }
+
+    @Override
+    public boolean needsBackpropError() { return false; }
 
     @Override
     public int getNumberOutput() {

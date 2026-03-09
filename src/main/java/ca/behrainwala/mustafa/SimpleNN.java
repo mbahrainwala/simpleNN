@@ -145,14 +145,14 @@ public class SimpleNN {
         double[][] test = {{ZERO, ZERO}, {ZERO, ONE}, {ONE, ZERO}, {ONE, ONE}};
 
         NetworkBuilder nb = new NetworkBuilder(2, 1);
-        nb.addConnectedLayer(3);
+        nb.addConnectedLayer(4);
         nb.addOutputLayer(2);
         NeuralNetwork nn = nb.build();
 
         System.out.println("Before training");
         for (double[] doubles : test) System.out.println(doubles[0]+", "+doubles[1]+"-->"+nn.getOutput(doubles));
 
-        for(int epoch=0; epoch<100000; epoch++) {
+        for(int epoch=0; epoch<200000; epoch++) {
             for (int i = 0; i < train.length; i++) {
                 nn.train(train[i], out[i]);
             }

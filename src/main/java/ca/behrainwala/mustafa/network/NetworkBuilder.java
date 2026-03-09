@@ -20,6 +20,11 @@ public class NetworkBuilder {
     private final int rows;
     private final int cols;
 
+    /** When true, each connected layer gets a unique seed (prevents correlated weights).
+     *  Activated when addWordVectorLayer is used (LLM mode). */
+    private boolean useDistinctSeeds = false;
+    private long nextSeed = 123;
+
     public NetworkBuilder(int numInputs, double scaleFactor){
         this.numInputs = numInputs;
         this.rows = (int) sqrt(numInputs);
@@ -35,18 +40,30 @@ public class NetworkBuilder {
     }
 
     public void addConnectedLayer(int numOutputs){
+        addConnectedLayer(numOutputs, 0.1);
+    }
+
+    public void addConnectedLayer(int numOutputs, double learningRate){
+        long seed = useDistinctSeeds ? nextSeed : 123;
+        nextSeed += 37;
         if(layers.isEmpty()){
-            layers.add(new ConnectedLayer(numInputs, numOutputs));
+            layers.add(new ConnectedLayer(numInputs, numOutputs, true, seed, learningRate));
         } else {
-            layers.add(new ConnectedLayer(layers.get(layers.size()-1).getNumberOutput(), numOutputs));
+            layers.add(new ConnectedLayer(layers.get(layers.size()-1).getNumberOutput(), numOutputs, true, seed, learningRate));
         }
     }
 
     public void addOutputLayer(int numOutputs){
+        addOutputLayer(numOutputs, 0.1);
+    }
+
+    public void addOutputLayer(int numOutputs, double learningRate){
+        long seed = useDistinctSeeds ? nextSeed : 123;
+        nextSeed += 37;
         if(layers.isEmpty()){
-            layers.add(new ConnectedLayer(numInputs, numOutputs, false));
+            layers.add(new ConnectedLayer(numInputs, numOutputs, false, seed, learningRate));
         } else {
-            layers.add(new ConnectedLayer(layers.get(layers.size()-1).getNumberOutput(), numOutputs, false));
+            layers.add(new ConnectedLayer(layers.get(layers.size()-1).getNumberOutput(), numOutputs, false, seed, learningRate));
         }
     }
 
@@ -78,6 +95,7 @@ public class NetworkBuilder {
         if (!layers.isEmpty()) {
             throw new IllegalArgumentException("WordVectorGraph must be the first layer.");
         }
+        useDistinctSeeds = true;
         WordVectorGraphLayer wvg = new WordVectorGraphLayer(tokenIds, vocabSize, embeddingDim,
                 contextSize, scaleFactor);
         layers.add(wvg);

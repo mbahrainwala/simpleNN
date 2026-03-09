@@ -85,11 +85,11 @@ import java.util.Scanner;
  *
  * ARCHITECTURE:
  * -------------
- * Input (16 words x 32-dim embeddings = 512 features) -> Hidden Layer (512 neurons, ReLU) -> Output (801 neurons, linear)
+ * Input (32 words x 32-dim embeddings = 1024 features) -> Hidden Layer (512 neurons, ReLU) -> Output (801 neurons, linear)
  *
  * Each word in the context window is represented by a 32-dimensional embedding
- * vector from the WordVectorGraph. This gives the network 512 input features
- * (16 words * 32 dimensions) instead of just 16 raw token IDs.
+ * vector from the WordVectorGraph. This gives the network 1024 input features
+ * (32 words * 32 dimensions) instead of just 32 raw token IDs.
  * Words with similar meanings have similar embedding vectors, so the network
  * can generalize: learning about "king" helps it understand "queen" too.
  *
@@ -98,7 +98,7 @@ import java.util.Scanner;
  * gradient flow. The neuron with the highest activation indicates the
  * model's prediction for the next word.
  *
- * Total parameters: 512*512 + 512*801 = 262,144 + 410,112 = ~672K weights
+ * Total parameters: 1024*512 + 512*801 = 524,288 + 410,112 = ~934K weights
  * (Compare to GPT-3's 175 BILLION parameters!)
  *
  *
@@ -140,8 +140,9 @@ public class SimpleLLM {
      * Number of previous tokens the model sees when predicting the next token.
      * Larger = more context but more parameters and slower training.
      * Real LLMs use 2048-128000+ tokens of context.
+     * 32 tokens balances context richness with trainability for a single hidden layer.
      */
-    private static final int CONTEXT_SIZE = 128;
+    private static final int CONTEXT_SIZE = 32;
 
     /**
      * Maximum vocabulary size - the number of unique words the model knows.
@@ -170,18 +171,26 @@ public class SimpleLLM {
      * More neurons = more capacity to learn patterns, but slower training.
      * This layer learns to represent word relationships and patterns.
      */
-    private static final int HIDDEN_SIZE = 512;
+    private static final int HIDDEN_SIZE = 2048;
 
     /**
      * Number of training epochs (full passes through the data).
      * More epochs = model sees data more times = better learning (up to a point).
      * Too many epochs can lead to "overfitting" (memorizing instead of generalizing).
      */
-    private static final int EPOCHS = 200;
+    private static final int EPOCHS = 20;
+
+    /**
+     * Number of training epochs (full passes through the data).
+     * More epochs = model sees data more times = better learning (up to a point).
+     * Too many epochs can lead to "overfitting" (memorizing instead of generalizing).
+     */
+    private static final double ACCURACY = 51.0;
 
     /**
      * Number of training examples shown per epoch.
-     * With ~4+ million available windows, we use a large subset each epoch.
+     * With ~4+ million available windows, we use a large subset each epo
+     * ch.
      * Each "sample" is one sliding window that trains the network once.
      */
     private static final int SAMPLES_PER_EPOCH = 300000;
@@ -214,11 +223,11 @@ public class SimpleLLM {
      * catastrophic weight updates ("gradient explosion").
      *
      * With embedding-based input (values 0 to ~1 after normalization),
-     * SCALE_FACTOR=30 shrinks them to ~0.03, keeping activations in a
-     * reasonable range and gradient updates small (~2% per step).
-     * This value is tuned for EMBEDDING_DIM=8, CONTEXT_SIZE=16, HIDDEN=256.
+     * SCALE_FACTOR=20 shrinks them to ~0.05, keeping activations in a
+     * reasonable range and gradient updates small.
+     * Tuned for EMBEDDING_DIM=32, CONTEXT_SIZE=32, HIDDEN=512.
      */
-    private static final double SCALE_FACTOR = 30.0;
+    private static final double SCALE_FACTOR = 20.0;
 
     // ==================== MAIN ENTRY POINT ====================
 
@@ -254,10 +263,11 @@ public class SimpleLLM {
         int[] tokenIds = BookDataLoader.tokenize(words, tokenizer, vocabSet);
         System.out.println("Token sequence length: " + tokenIds.length);
 
-        List<Integer> validPositions = BookDataLoader.findValidPositions(tokenIds, CONTEXT_SIZE);
-        System.out.println("Valid training positions: " + validPositions.size());
+        List<Integer> validPositionsList = BookDataLoader.findValidPositions(tokenIds, CONTEXT_SIZE);
+        int[] validPositions = validPositionsList.stream().mapToInt(Integer::intValue).toArray();
+        System.out.println("Valid training positions: " + validPositions.length);
 
-        double coveragePercent = (double) validPositions.size() /
+        double coveragePercent = (double) validPositions.length /
                 Math.max(1, tokenIds.length - CONTEXT_SIZE) * 100;
         System.out.printf("Vocabulary coverage: %.1f%% of text\n\n", coveragePercent);
 
@@ -282,13 +292,13 @@ public class SimpleLLM {
         // Display the word graph: which words are grouped together
         wordVectors.printWordClusters(tokenizer);
 
-        nb.addConnectedLayer(HIDDEN_SIZE);
-        nb.addOutputLayer(vocabSize);
+        nb.addConnectedLayer(HIDDEN_SIZE, 0.15);
+        nb.addOutputLayer(vocabSize, 0.1);
         NeuralNetwork nn = nb.build();
 
         int inputSize = CONTEXT_SIZE * EMBEDDING_DIM;
         int totalParams = inputSize * HIDDEN_SIZE + HIDDEN_SIZE * vocabSize;
-        System.out.println("Network: " + inputSize + " (16x" + EMBEDDING_DIM + ") -> "
+        System.out.println("Network: " + inputSize + " (" + CONTEXT_SIZE + "x" + EMBEDDING_DIM + ") -> "
                 + HIDDEN_SIZE + " -> " + vocabSize);
         System.out.println("Total parameters (weights): " + String.format("%,d", totalParams));
         System.out.println("Scale factor: " + SCALE_FACTOR);
@@ -311,13 +321,14 @@ public class SimpleLLM {
         //   - "Gradient" = we compute the direction of steepest error reduction
         //   - "Descent" = we move weights in that direction to reduce error
         Random rand = new Random(42);
-        int totalPositions = validPositions.size();
+        int totalPositions = validPositions.length;
 
         System.out.println("Training started...");
         System.out.println("(Random chance accuracy = " +
                 String.format("%.2f", 100.0 / vocabSize) + "% for " + vocabSize + " words)\n");
 
         double bestAccuracy = 0;
+        double[] input = new double[CONTEXT_SIZE]; // reuse across iterations
 
         for (int epoch = 0; epoch < EPOCHS; epoch++) {
             // Save weights before each epoch so we can roll back if accuracy drops
@@ -326,18 +337,20 @@ public class SimpleLLM {
             int correct = 0;
             long startTime = System.currentTimeMillis();
 
-            // Shuffle training positions for each epoch.
-            // This prevents the model from memorizing the order of examples
-            // and helps it generalize to new contexts.
-            Collections.shuffle(validPositions, rand);
+            // Fisher-Yates shuffle on primitive int[] (faster than Collections.shuffle on ArrayList<Integer>)
+            for (int i = totalPositions - 1; i > 0; i--) {
+                int swapIdx = rand.nextInt(i + 1);
+                int tmp = validPositions[i];
+                validPositions[i] = validPositions[swapIdx];
+                validPositions[swapIdx] = tmp;
+            }
 
             int numSamples = Math.min(SAMPLES_PER_EPOCH, totalPositions);
             for (int s = 0; s < numSamples; s++) {
                 // Create the input window on-the-fly (memory efficient)
                 // The input is raw token IDs — the WordVectorGraph layer inside the
                 // network converts them to embedding vectors automatically.
-                int pos = validPositions.get(s);
-                double[] input = new double[CONTEXT_SIZE];
+                int pos = validPositions[s];
                 for (int j = 0; j < CONTEXT_SIZE; j++) {
                     input[j] = tokenIds[pos + j];
                 }
@@ -375,8 +388,13 @@ public class SimpleLLM {
                         epoch + 1, acc, elapsed / 1000.0);
             }
 
+            // Learning rate decay: reduce by 1% each epoch.
+            // Starts aggressive for fast initial learning, then fine-tunes.
+            // After 70 epochs: lr ≈ 50% of initial. After 200 epochs: lr ≈ 13%.
+            nn.scaleLearningRate(0.99);
+
             // Stop early if we've reached 60% accuracy
-            if (bestAccuracy >= 60.0) {
+            if (bestAccuracy >= ACCURACY) {
                 System.out.println("Reached 60% accuracy — stopping training early.\n");
                 break;
             }
@@ -409,12 +427,14 @@ public class SimpleLLM {
             "she said to him",
             "it was a dark"
         };
+        nn.enableGenerationCache();
         for (String seed : seeds) {
             String generated = generate(nn, tokenizer, seed, vocabSize, vocabSet, rand);
             System.out.println("Seed: \"" + seed + "\"");
             System.out.println("  -> " + generated);
             System.out.println();
         }
+        nn.disableGenerationCache();
 
         // ============================================================
         // PHASE 7: Interactive Chat Mode
@@ -461,6 +481,8 @@ public class SimpleLLM {
         Scanner scanner = new Scanner(System.in);
         double currentTemp = TEMPERATURE;
         int currentLen = GENERATE_LENGTH;
+
+        nn.enableGenerationCache();
 
         System.out.println("=============== Interactive Mode ===============");
         System.out.println("Type any text and the model will continue it.");
@@ -562,39 +584,40 @@ public class SimpleLLM {
                                              Random rand, double temperature, int maxLength) {
         // Convert seed words to token IDs
         String[] seedWords = seed.toLowerCase().split("\\s+");
-        List<Integer> context = new ArrayList<>();
+        List<Integer> seedTokens = new ArrayList<>();
 
         for (String w : seedWords) {
             w = BookDataLoader.cleanWord(w);
             if (!w.isEmpty() && vocabSet.contains(w)) {
-                context.add(tokenizer.getTextToken(w));
+                seedTokens.add(tokenizer.getTextToken(w));
             } else {
-                context.add(0); // unknown words get token 0
+                seedTokens.add(0); // unknown words get token 0
             }
         }
 
-        // Pad context to CONTEXT_SIZE from the left with zeros
-        // Example (CONTEXT_SIZE=4): seed="he said" -> [0, 0, 42, 15]
-        while (context.size() < CONTEXT_SIZE) {
-            context.add(0, 0);
+        // Build context as a primitive int array (avoids boxing/unboxing overhead)
+        // Pad from the left with zeros if needed, truncate from left if too long
+        int[] context = new int[CONTEXT_SIZE];
+        int seedSize = seedTokens.size();
+        int padLen = Math.max(0, CONTEXT_SIZE - seedSize);
+        // zeros are already the default; copy seed tokens after the padding
+        int srcStart = Math.max(0, seedSize - CONTEXT_SIZE);
+        for (int i = srcStart; i < seedSize; i++) {
+            context[padLen + i - srcStart] = seedTokens.get(i);
         }
-        if (context.size() > CONTEXT_SIZE) {
-            context = new ArrayList<>(context.subList(context.size() - CONTEXT_SIZE, context.size()));
-        }
+
+        // Reusable input array for the forward pass
+        double[] input = new double[CONTEXT_SIZE];
 
         StringBuilder result = new StringBuilder(seed);
 
         for (int i = 0; i < maxLength; i++) {
-            // Build input array from current context as raw token IDs.
-            // The WordVectorGraph layer inside the network converts these to
-            // embedding vectors automatically during the forward pass.
-            double[] input = new double[CONTEXT_SIZE];
+            // Copy context into the input array for the forward pass
             for (int j = 0; j < CONTEXT_SIZE; j++) {
-                input[j] = context.get(j);
+                input[j] = context[j];
             }
 
             // Get raw output scores from the network (before softmax)
-            // These are NOT probabilities yet - just activation values from the last ReLU layer
             double[] output = nn.getOutputArray(input);
 
             // Sample using temperature-scaled softmax
@@ -611,10 +634,11 @@ public class SimpleLLM {
 
             result.append(" ").append(word);
 
-            // Slide context window: remove oldest token, add new prediction
-            // This is the "autoregressive" part - the model's output becomes its input
-            context.remove(0);
-            context.add(predicted);
+            // Slide context window: shift left by 1, append new prediction.
+            // This is the "autoregressive" part - the model's output becomes its input.
+            // Uses System.arraycopy instead of ArrayList.remove(0) which is O(n).
+            System.arraycopy(context, 1, context, 0, CONTEXT_SIZE - 1);
+            context[CONTEXT_SIZE - 1] = predicted;
         }
 
         return result.toString();

@@ -4,9 +4,13 @@ import java.util.Random;
 
 public class MatrixUtils {
     public static double[][] initializeWeights(int rows, int cols) {
+        return initializeWeights(rows, cols, 123);
+    }
+
+    public static double[][] initializeWeights(int rows, int cols, long seed) {
         double[][] weights = new double[rows][cols];
 
-        Random r = new Random(123);
+        Random r = new Random(seed);
 
         for (int i = 0; i < rows; i++) {
             for (int j = 0; j < cols; j++) {

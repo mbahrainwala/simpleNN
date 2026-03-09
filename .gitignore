@@ -31,3 +31,4 @@ replay_pid*
 /data/mnist_test.csv
 /data/mnist_train.csv
 /data/books/*.txt
+/data/books/gen_knowledge.sh

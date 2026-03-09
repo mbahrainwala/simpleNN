@@ -30,6 +30,10 @@ public abstract class Layer {
 
     public abstract int getOutputCols();
 
+    /** Whether this layer has trainable weights that benefit from receiving backprop errors.
+     *  Returns false for layers like WordVectorGraphLayer whose backPropagate is a no-op. */
+    public boolean needsBackpropError() { return true; }
+
     /** Saves a snapshot of trainable weights. Default no-op for layers without weights. */
     public void saveWeights() {}
 
